@@ -107,6 +107,13 @@ initDatabase();
     }
 
     const downloadBtn = document.getElementById('btn-download');
+    let currentActiveRecord = null; // Track the current record for downloads
+
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            if (currentActiveRecord) downloadFilledForm(currentActiveRecord);
+        });
+    }
 
     // iPhone Safari compatibility: avoid String.prototype.replaceAll (not available on some iOS versions)
     function escapeHtml(str) {
@@ -227,6 +234,7 @@ initDatabase();
 
     // Open Form State (New or Read-Only)
     function openForm(record) {
+        currentActiveRecord = record; // Save for download button
         gateSection.classList.add('hidden');
         formSection.classList.remove('hidden');
 
@@ -387,7 +395,9 @@ initDatabase();
 
         // Prepare FormSubmit fields
         let emailBody = `GFA ADMISSION APPLICATION\n`;
-        emailBody += `Serial Number: ${serial}\n\n`;
+        emailBody += `Serial Number: ${serial}\n`;
+        emailBody += `Preferred Branch: ${dataObj.preferred_branch || 'Not Selected'}\n\n`;
+        
         emailBody += `--- SECTION A: PARTICULARS ---\n`;
         emailBody += `Name: ${dataObj.surname || ''}, ${dataObj.firstname || ''} ${dataObj.othernames || ''}\n`;
         emailBody += `Gender: ${dataObj.gender || ''}\n`;
@@ -415,7 +425,7 @@ initDatabase();
         emailBody += `NHIS: ${dataObj.nhis || ''}\n`;
         emailBody += `Other Needs: ${dataObj.other_needs || ''}\n`;
 
-        const subject = `New Admission Application: ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
+        const subject = `New Application: ${dataObj.preferred_branch || 'No Branch'} - ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
         
         const fsSubject = document.getElementById('fs-subject');
         if (fsSubject) fsSubject.value = subject;
