@@ -322,21 +322,25 @@ initDatabase();
     }
 
     // Submit Logic (Mobile-Optimized)
-    let isFinalSubmit = false;
-    form.addEventListener('submit', (e) => {
-        // If this is the second pass, let the browser handle it naturally
-        if (isFinalSubmit) return;
+    const btnSubmit = document.getElementById('btn-submit');
+    let isSubmitting = false;
 
-        // First pass: capture data and save locally
-        e.preventDefault();
+    if (btnSubmit) {
+        btnSubmit.addEventListener('click', () => {
+            if (isSubmitting) return;
 
-        const btnSubmit = document.getElementById('btn-submit');
-        if (!btnSubmit) return;
+            // Trigger native browser validation
+            if (!form.reportValidity()) {
+                return;
+            }
 
-        // Visual feedback (Avoid .disabled = true here as it can block submission on some mobile browsers)
-        btnSubmit.innerText = "Processing...";
-        btnSubmit.style.pointerEvents = "none";
-        btnSubmit.style.opacity = "0.7";
+            isSubmitting = true;
+
+            // Visual feedback
+            btnSubmit.innerText = "Processing...";
+            btnSubmit.style.pointerEvents = "none";
+            btnSubmit.style.opacity = "0.7";
+
 
         const formData = new FormData(form);
         const dataObj = {};
@@ -422,7 +426,8 @@ initDatabase();
         emailBody += `--- SECTION D: MEDICAL ---\n`;
         emailBody += `Doctor: ${dataObj.doctor_name || ''} (${dataObj.doctor_phone || ''})\n`;
         emailBody += `Asthma: ${dataObj.asthma || ''}\n`;
-        emailBody += `NHIS: ${dataObj.nhis || ''}\n`;
+        emailBody += `NHIS Active: ${dataObj.nhis || ''}\n`;
+        emailBody += `NHIS Number: ${dataObj.nhis_number || 'N/A'}\n`;
         emailBody += `Other Needs: ${dataObj.other_needs || ''}\n`;
 
         const subject = `New Application: ${dataObj.preferred_branch || 'No Branch'} - ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
@@ -434,19 +439,15 @@ initDatabase();
         if (fsDetails) fsDetails.value = emailBody;
 
         // Final Submission
-        isFinalSubmit = true;
-        btnSubmit.innerText = "Submitting...";
-
-        // Use form.submit() directly for maximum reliability across mobile browsers
-        // when bypassing the 'submit' event listener loop.
         form.submit();
 
         // Safety timeout to allow retry if the browser stays on the same page
         setTimeout(() => {
-            isFinalSubmit = false;
+            isSubmitting = false;
             btnSubmit.style.pointerEvents = "auto";
             btnSubmit.style.opacity = "1";
             btnSubmit.innerText = "Submit Application";
         }, 10000);
     });
+}
 
