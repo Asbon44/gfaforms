@@ -136,48 +136,226 @@ initDatabase();
         const dataObj = record.formData;
 
         const passportDataUrl = dataObj._passportDataUrl;
-        const passportFileName = dataObj._passportFileName;
-
-        const rows = Object.keys(dataObj).sort().filter((k) => !k.startsWith("_passport")).map((k) => {
-            const v = (dataObj[k] === undefined || dataObj[k] === null) ? "" : String(dataObj[k]);
-            return `<tr><td style="padding:6px;border:1px solid #ddd;"><strong>${escapeHtml(k)}</strong></td><td style="padding:6px;border:1px solid #ddd;">${escapeHtml(v)}</td></tr>`;
-        }).join("");
-
-        const passportBlock = passportDataUrl
-            ? `<div style="margin:14px 0 18px;">
-                 <h2 style="margin:0 0 8px;font-size:16px;">Passport Photo</h2>
-                 <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
-                   <img src="${passportDataUrl}" alt="Passport Photo" style="width:160px;height:200px;object-fit:cover;border:1px solid #ddd;border-radius:6px;" />
-                   <div style="color:#555;font-size:13px;line-height:1.35;">
-                     <div><strong>File:</strong> ${escapeHtml(passportFileName || "passport")}</div>
-                     <div><strong>Note:</strong> If you “Print / Save as PDF”, the image will be included.</div>
-                   </div>
-                 </div>
-               </div>`
-            : `<div style="margin:14px 0 18px;color:#b45309;">
-                 <strong>Passport Photo:</strong> Not saved for download (older submission or image missing).
-               </div>`;
+        
+        const getVal = (key) => escapeHtml(dataObj[key] || "N/A");
 
         const html = `<!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>GFA Admission Form - ${safeSerial}</title>
-  <style>
-    body{font-family:Arial, sans-serif; padding:24px;}
-    h1{margin:0 0 6px;}
-    .meta{color:#555; margin:0 0 18px;}
-    table{border-collapse:collapse; width:100%;}
-    @media print { button { display:none; } }
-  </style>
+    <meta charset="utf-8" />
+    <title>GFA Admission Form - ${safeSerial}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+        body { font-family: 'Outfit', sans-serif; margin: 0; padding: 40px; background: #f0f4f8; color: #1a202c; line-height: 1.4; }
+        .form-container { max-width: 900px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-radius: 12px; position: relative; }
+        
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 4px solid #003366; padding-bottom: 20px; position: relative; }
+        .header h1 { color: #003366; font-size: 32px; margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .header .sub-title { display: inline-block; background: #FFD700; color: #003366; padding: 6px 30px; border-radius: 50px; font-weight: 700; margin-top: 10px; font-size: 16px; text-transform: uppercase; }
+        
+        .section { margin-bottom: 20px; border: 1.5px solid #003366; border-radius: 8px; overflow: hidden; }
+        .section-header { background: #003366; color: white; padding: 8px 15px; font-weight: 700; font-size: 13px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .section-content { padding: 15px; }
+        
+        .row { display: flex; gap: 20px; margin-bottom: 12px; }
+        .col { flex: 1; }
+        .field { margin-bottom: 8px; }
+        .label { font-weight: 700; color: #003366; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
+        .value { border: 1px solid #e2e8f0; background: #f8fafc; padding: 6px 10px; min-height: 18px; font-size: 14px; color: #2d3748; border-radius: 4px; }
+        
+        .passport-area { width: 150px; height: 180px; border: 2px dashed #cbd5e0; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f7fafc; }
+        .passport-area img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .footer { text-align: center; margin-top: 30px; font-size: 13px; color: white; background: #003366; padding: 15px; border-radius: 0 0 12px 12px; margin: 30px -40px -40px -40px; }
+        .print-btn { position: fixed; top: 20px; right: 20px; background: #003366; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; font-family: 'Outfit', sans-serif; transition: all 0.2s; }
+        .print-btn:hover { background: #002244; transform: translateY(-2px); }
+        
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; background: white; }
+            .form-container { box-shadow: none; border: none; padding: 20px; width: 100%; max-width: 100%; }
+        }
+
+        .batch-tag { background: #003366; color: white; padding: 10px 20px; border-radius: 4px; font-weight: 800; font-size: 18px; display: inline-block; margin-top: 5px; }
+    </style>
 </head>
 <body>
-  <button onclick="window.print()" style="margin-bottom:16px;padding:10px 14px;">Print / Save as PDF</button>
-  <h1>GFA Admission Application</h1>
-  <p class="meta"><strong>Serial:</strong> ${escapeHtml(record.serial || "")} &nbsp; <strong>Submitted:</strong> ${escapeHtml(submittedAt)}</p>
-  ${passportBlock}
-  <table>${rows}</table>
-  <script type="application/json" id="formDataJson">${escapeHtml(JSON.stringify({ serial: record.serial, submittedAt, formData: dataObj }, null, 2))}</script>
+    <button class="print-btn" onclick="window.print()">Download / Print as PDF</button>
+
+    <div class="form-container">
+        <div class="header">
+            <img src="logo.PNG" alt="GFA Logo" style="width: 100px; height: auto; margin-bottom: 10px;">
+            <h1>GENERAL FASHION ACADEMY</h1>
+            <div class="sub-title">ADMISSION APPLICATION FORM</div>
+            <div style="margin-top: 15px; font-size: 13px; font-weight: 600;">
+                Serial No: <span style="color: #c53030;">${escapeHtml(record.serial || "")}</span> &nbsp;&nbsp;|&nbsp;&nbsp; 
+                Date: ${new Date(submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <span>SECTION A: APPLICANT PARTICULARS</span>
+                <span style="background: #FFD700; color: #003366; padding: 2px 10px; border-radius: 4px; font-size: 11px;">BRANCH: ${getVal('preferred_branch')}</span>
+            </div>
+            <div class="section-content">
+                <div class="row">
+                    <div class="col" style="flex: 3;">
+                        <div class="field">
+                            <div class="label">Surname</div>
+                            <div class="value">${getVal('surname')}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">First Name & Other Names</div>
+                            <div class="value">${getVal('firstname')} ${getVal('othernames')}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="label">Gender</div>
+                                <div class="value">${getVal('gender')}</div>
+                            </div>
+                            <div class="col">
+                                <div class="label">Date of Birth</div>
+                                <div class="value">${getVal('dob')}</div>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Place of Birth / Hometown</div>
+                            <div class="value">${getVal('pob')} / ${getVal('hometown')}</div>
+                        </div>
+                    </div>
+                    <div class="col" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                        <div class="label" style="margin-bottom: 5px;">PASSPORT PHOTO</div>
+                        <div class="passport-area">
+                            ${passportDataUrl ? `<img src="${passportDataUrl}" />` : '<span style="color:#a0aec0;font-size:12px;">No Image</span>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="label">Religious Denomination</div>
+                        <div class="value">${getVal('religion')}</div>
+                    </div>
+                    <div class="col">
+                        <div class="label">Residential Status</div>
+                        <div class="value">${getVal('residential')}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">SECTION B: CONTACT & BACKGROUND INFORMATION</div>
+            <div class="section-content">
+                <div class="field">
+                    <div class="label">Residential Address (Town, Street, Contact)</div>
+                    <div class="value" style="min-height: 40px;">${getVal('contact_address')}</div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="label">Living Situation</div>
+                        <div class="value">${getVal('living_situation')}</div>
+                    </div>
+                    <div class="col">
+                        <div class="label">How did you hear about GFA?</div>
+                        <div class="value">${getVal('marketing')}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">First time in a fashion center?</div>
+                    <div class="value">${getVal('first_time')} ${dataObj.first_time === 'No' ? ` (Previous: ${getVal('previous_school')})` : ''}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">SECTION C: FAMILY INFORMATION</div>
+            <div class="section-content">
+                <div class="row">
+                    <div class="col">
+                        <div class="field">
+                            <div class="label">Father's Name & Occupation</div>
+                            <div class="value">${getVal('father_name')} — ${getVal('father_job')}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Father's Phone Number</div>
+                            <div class="value">${getVal('father_phone')}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="field">
+                            <div class="label">Mother's Name & Occupation</div>
+                            <div class="value">${getVal('mother_name')} — ${getVal('mother_job')}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Mother's Phone Number</div>
+                            <div class="value">${getVal('mother_phone')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 12px; background: #fffdf2; border: 1px dashed #e9c46a; border-radius: 6px;">
+                    <div class="label" style="color: #856404;">Emergency Contact (Different from parents)</div>
+                    <div class="row" style="margin-bottom: 0;">
+                        <div class="col">
+                            <div class="label">Name</div>
+                            <div class="value">${getVal('emergency_name')}</div>
+                        </div>
+                        <div class="col">
+                            <div class="label">Phone Number</div>
+                            <div class="value">${getVal('emergency_phone')}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">SECTION D: MEDICAL INFORMATION</div>
+            <div class="section-content">
+                <div class="row">
+                    <div class="col">
+                        <div class="label">Family Doctor & Contact</div>
+                        <div class="value">${getVal('doctor_name')} (${getVal('doctor_phone')})</div>
+                    </div>
+                    <div class="col">
+                        <div class="label">Asthma / Inhaler Status</div>
+                        <div class="value">${getVal('asthma')}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="label">NHIS Card Active & Number</div>
+                        <div class="value">${getVal('nhis')} | ${getVal('nhis_number')}</div>
+                    </div>
+                    <div class="col">
+                        <div class="label">Other Special Needs</div>
+                        <div class="value">${getVal('other_needs')}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col" style="flex: 1.5;">
+                <div class="label">Agreements & Policies</div>
+                <div style="font-size: 12px; color: #4a5568; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+                    (&#10003;) Agreed to the Code of Behavior and Financial Responsibilities.<br>
+                    (&#10003;) Understands that payments made are non-refundable.
+                </div>
+            </div>
+            <div class="col" style="text-align: center;">
+                <div class="label">Selected Admission Batch</div>
+                <div class="batch-tag">${getVal('admission_batch')}</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div style="font-weight: 700; font-size: 16px; margin-bottom: 5px;">CONTACT US ON</div>
+            <div>+233 24 426 4872 / +233 54 344 3983</div>
+        </div>
+    </div>
+
+    <script type="application/json" id="formDataJson">${escapeHtml(JSON.stringify({ serial: record.serial, submittedAt, formData: dataObj }, null, 2))}</script>
 </body>
 </html>`;
 
@@ -398,40 +576,59 @@ initDatabase();
         }
 
         // Prepare FormSubmit fields
-        let emailBody = `GFA ADMISSION APPLICATION\n`;
-        emailBody += `Serial Number: ${serial}\n`;
-        emailBody += `Preferred Branch: ${dataObj.preferred_branch || 'Not Selected'}\n`;
-        emailBody += `Admission Batch: ${dataObj.admission_batch || 'Not Selected'}\n\n`;
+        let emailBody = `==================================================\n`;
+        emailBody += `     GFA ADMISSION APPLICATION - OFFICIAL REPORT    \n`;
+        emailBody += `==================================================\n\n`;
+        emailBody += `SERIAL NUMBER    : ${serial}\n`;
+        emailBody += `PREFERRED BRANCH : ${dataObj.preferred_branch || 'N/A'}\n`;
+        emailBody += `ADMISSION BATCH  : ${dataObj.admission_batch || 'N/A'}\n`;
+        emailBody += `SUBMISSION DATE  : ${new Date().toLocaleString()}\n\n`;
         
-        emailBody += `--- SECTION A: PARTICULARS ---\n`;
-        emailBody += `Name: ${dataObj.surname || ''}, ${dataObj.firstname || ''} ${dataObj.othernames || ''}\n`;
-        emailBody += `Gender: ${dataObj.gender || ''}\n`;
-        emailBody += `DOB / POB: ${dataObj.dob || ''} / ${dataObj.pob || ''}\n`;
-        emailBody += `Hometown: ${dataObj.hometown || ''}\n`;
-        emailBody += `Religion: ${dataObj.religion || ''}\n`;
-        emailBody += `Status: ${dataObj.residential || ''}\n\n`;
+        emailBody += `--- SECTION A: APPLICANT PARTICULARS ---\n`;
+        emailBody += `FULL NAME        : ${dataObj.surname || ''}, ${dataObj.firstname || ''} ${dataObj.othernames || ''}\n`;
+        emailBody += `GENDER           : ${dataObj.gender || 'N/A'}\n`;
+        emailBody += `DATE OF BIRTH    : ${dataObj.dob || 'N/A'}\n`;
+        emailBody += `PLACE OF BIRTH   : ${dataObj.pob || 'N/A'}\n`;
+        emailBody += `HOMETOWN/REGION  : ${dataObj.hometown || 'N/A'}\n`;
+        emailBody += `RELIGION         : ${dataObj.religion || 'N/A'}\n`;
+        emailBody += `RESIDENTIAL STAT : ${dataObj.residential || 'N/A'}\n\n`;
 
         emailBody += `--- SECTION B: CONTACT & BACKGROUND ---\n`;
-        emailBody += `Address: ${dataObj.contact_address || ''}\n`;
-        emailBody += `Living Situation: ${dataObj.living_situation || ''}\n`;
-        emailBody += `First Time in Fashion Center?: ${dataObj.first_time || ''}\n`;
+        emailBody += `ADDRESS          : ${dataObj.contact_address || 'N/A'}\n`;
+        emailBody += `LIVING SITUATION : ${dataObj.living_situation || 'N/A'}\n`;
+        emailBody += `MARKETING SOURCE : ${dataObj.marketing || 'N/A'}\n`;
+        emailBody += `FIRST TIME?      : ${dataObj.first_time || 'N/A'}\n`;
         if (dataObj.first_time === 'No') {
-            emailBody += `Previous School: ${dataObj.previous_school || ''}\n`;
+            emailBody += `PREVIOUS SCHOOL  : ${dataObj.previous_school || 'N/A'}\n`;
         }
+        emailBody += `\n`;
 
-        emailBody += `\n--- SECTION C: FAMILY ---\n`;
-        emailBody += `Father: ${dataObj.father_name || ''} (${dataObj.father_phone || ''}) - ${dataObj.father_job || ''}\n`;
-        emailBody += `Mother: ${dataObj.mother_name || ''} (${dataObj.mother_phone || ''}) - ${dataObj.mother_job || ''}\n`;
-        emailBody += `Emergency Contact: ${dataObj.emergency_name || ''} (${dataObj.emergency_phone || ''})\n\n`;
+        emailBody += `--- SECTION C: FAMILY INFORMATION ---\n`;
+        emailBody += `FATHER'S NAME    : ${dataObj.father_name || 'N/A'}\n`;
+        emailBody += `FATHER'S JOB     : ${dataObj.father_job || 'N/A'}\n`;
+        emailBody += `FATHER'S PHONE   : ${dataObj.father_phone || 'N/A'}\n`;
+        emailBody += `MOTHER'S NAME    : ${dataObj.mother_name || 'N/A'}\n`;
+        emailBody += `MOTHER'S JOB     : ${dataObj.mother_job || 'N/A'}\n`;
+        emailBody += `MOTHER'S PHONE   : ${dataObj.mother_phone || 'N/A'}\n`;
+        emailBody += `EMERGENCY CONTACT: ${dataObj.emergency_name || 'N/A'}\n`;
+        emailBody += `EMERGENCY PHONE  : ${dataObj.emergency_phone || 'N/A'}\n\n`;
 
-        emailBody += `--- SECTION D: MEDICAL ---\n`;
-        emailBody += `Doctor: ${dataObj.doctor_name || ''} (${dataObj.doctor_phone || ''})\n`;
-        emailBody += `Asthma: ${dataObj.asthma || ''}\n`;
-        emailBody += `NHIS Active: ${dataObj.nhis || ''}\n`;
-        emailBody += `NHIS Number: ${dataObj.nhis_number || 'N/A'}\n`;
-        emailBody += `Other Needs: ${dataObj.other_needs || ''}\n`;
+        emailBody += `--- SECTION D: MEDICAL INFORMATION ---\n`;
+        emailBody += `FAMILY DOCTOR    : ${dataObj.doctor_name || 'N/A'}\n`;
+        emailBody += `DOCTOR PHONE     : ${dataObj.doctor_phone || 'N/A'}\n`;
+        emailBody += `ASTHMA STATUS    : ${dataObj.asthma || 'N/A'}\n`;
+        emailBody += `NHIS ACTIVE?     : ${dataObj.nhis || 'N/A'}\n`;
+        emailBody += `NHIS NUMBER      : ${dataObj.nhis_number || 'N/A'}\n`;
+        emailBody += `OTHER NEEDS      : ${dataObj.other_needs || 'N/A'}\n\n`;
 
-        const subject = `New Application: ${dataObj.admission_batch || 'No Batch'} - ${dataObj.preferred_branch || 'No Branch'} - ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
+        emailBody += `--- AGREEMENTS ---\n`;
+        emailBody += `CODE OF BEHAVIOR : AGREED\n`;
+        emailBody += `REFUND POLICY    : UNDERSTOOD\n\n`;
+        emailBody += `==================================================\n`;
+        emailBody += `             END OF APPLICATION REPORT             \n`;
+        emailBody += `==================================================\n`;
+
+        const subject = `GFA Application: ${dataObj.admission_batch || 'Batch'} - ${dataObj.preferred_branch || 'Branch'} - ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
         
         const fsSubject = document.getElementById('fs-subject');
         if (fsSubject) fsSubject.value = subject;
