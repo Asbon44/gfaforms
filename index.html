@@ -14,7 +14,7 @@
     <div id="app-container">
         <div class="header">
             <img src="logo.PNG" alt="General Fashion Academy Logo">
-            <h1>ADMISSION APPLICATION</h1>
+            <h1>ADMISSION APPLICATION FORM</h1>
         </div>
 
         <!-- GATE SECTION -->
@@ -326,8 +326,27 @@
                         By checking the box below, you agree to the General Fashion Academy's policies including:<br>
                         <strong>Refund Policy:</strong> No payments done can not be refunded.<br>
                     </p>
-                    <strong>NOTE: </strong> School resumes on <br>1st 18th June 2026<br><br>2nd Batch 20th July
-                    2026<br><br>3rd Batch 18th August 2026<br><br>Late admission 12th January 2027<br>
+                    <div class="form-group" style="margin-top: 10px; padding-top: 10px;">
+                        <label style="color: #003366; font-weight: 700;">Select Your Admission Batch</label>
+                        <div class="radio-group" style="flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 10px;">
+                            <div class="radio-item">
+                                <input type="radio" id="batch-1" name="admission_batch" value="1st Batch (18th June 2026)" required>
+                                <label for="batch-1" style="font-weight: 600;">1st Batch: 18th June 2026</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="batch-2" name="admission_batch" value="2nd Batch (20th July 2026)">
+                                <label for="batch-2" style="font-weight: 600;">2nd Batch: 20th July 2026</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="batch-3" name="admission_batch" value="3rd Batch (18th August 2026)">
+                                <label for="batch-3" style="font-weight: 600;">3rd Batch: 18th August 2026</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="batch-late" name="admission_batch" value="Late Admission (12th January 2027)">
+                                <label for="batch-late" style="font-weight: 600;">Late Admission: 12th January 2027</label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="checkbox-group" id="agreement-container">
                         <div class="checkbox-item">
                             <input type="checkbox" id="agreement" name="agreement" required>

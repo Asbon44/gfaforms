@@ -400,7 +400,8 @@ initDatabase();
         // Prepare FormSubmit fields
         let emailBody = `GFA ADMISSION APPLICATION\n`;
         emailBody += `Serial Number: ${serial}\n`;
-        emailBody += `Preferred Branch: ${dataObj.preferred_branch || 'Not Selected'}\n\n`;
+        emailBody += `Preferred Branch: ${dataObj.preferred_branch || 'Not Selected'}\n`;
+        emailBody += `Admission Batch: ${dataObj.admission_batch || 'Not Selected'}\n\n`;
         
         emailBody += `--- SECTION A: PARTICULARS ---\n`;
         emailBody += `Name: ${dataObj.surname || ''}, ${dataObj.firstname || ''} ${dataObj.othernames || ''}\n`;
@@ -430,7 +431,7 @@ initDatabase();
         emailBody += `NHIS Number: ${dataObj.nhis_number || 'N/A'}\n`;
         emailBody += `Other Needs: ${dataObj.other_needs || ''}\n`;
 
-        const subject = `New Application: ${dataObj.preferred_branch || 'No Branch'} - ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
+        const subject = `New Application: ${dataObj.admission_batch || 'No Batch'} - ${dataObj.preferred_branch || 'No Branch'} - ${dataObj.firstname || 'Applicant'} ${dataObj.surname || ''} (${serial})`;
         
         const fsSubject = document.getElementById('fs-subject');
         if (fsSubject) fsSubject.value = subject;
